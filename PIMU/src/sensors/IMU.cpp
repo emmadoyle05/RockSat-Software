@@ -40,10 +40,10 @@ void IMU::imu_loop()
 bool IMU::connect_to_imu(int retryDefault) 
 {
     // Connect to the IMU.
-    int safetyCount = 0;
+    int safetyCount = retryDefault;
     while (!imu.begin_I2C(0x68, &PIMU_WIRE) && safetyCount < RETRY_MAX) 
     {
-        SerialUSB.print("Cannot connect to IMU! Retrying...");
+        SerialUSB.println("Cannot connect to IMU! Retrying...");
         safetyCount++;
         delay(100);
     }

@@ -1,6 +1,7 @@
 #include "main.h"
 #include "defines.h"
 #include "sensors/IMU.h"
+#include "sensors/Thermocouple.h"
 
 /// If the serial did not connect.
 bool faultySerial = false;
@@ -8,7 +9,8 @@ bool faultySerial = false;
 bool faultyIMU = false;
 
 /// The IMU connection.
-IMU imu;
+//IMU imu;
+Thermocouple thermo1 = Thermocouple(0x67);
 
 void setup() 
 {
@@ -19,21 +21,28 @@ void setup()
         SerialUSB.println("Connected to the serial.");
     }
     
+    if (thermo1.connect_to_thermo()) 
+    {
+        SerialUSB.printf("Thermocouple with adress %d connected!\n", thermo1.address);
+        thermo1.configure_thermo();
+    }
+    
     // Setup the IMU.
-    if (imu.connect_to_imu())
-    {
-        SerialUSB.println("IMU connected!!");
-        imu.configure_imu();
-    }
-    else
-    {
-        SerialUSB.println("IMU not connected. Moving on without IMU :(");
-    }
+    // if (imu.connect_to_imu())
+    // {
+    //     SerialUSB.println("IMU connected!!");
+    //     imu.configure_imu();
+    // }
+    // else
+    // {
+    //     SerialUSB.println("IMU not connected. Moving on without IMU :(");
+    // }
 }
 
 void loop() 
 {
-    imu.imu_loop();
+    //imu.imu_loop();
+    thermo1.thermo_loop();
     delay(LOOP_DELAY);
 }
 
