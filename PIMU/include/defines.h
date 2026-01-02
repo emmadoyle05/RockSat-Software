@@ -8,7 +8,7 @@
 #define PIMU_WIRE Wire2
 
 /// The baud rate for USB serial
-#define BAUD 115200
+#define BAUD_RATE_RSX 115200
 
 /// How long to wait in ms for each update loop.
 #define LOOP_DELAY 100

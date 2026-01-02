@@ -9,7 +9,7 @@ bool faultySerial = false;
 bool faultyIMU = false;
 
 /// The IMU connection.
-//IMU imu;
+IMU imu;
 Thermocouple thermo1 = Thermocouple(0x67);
 
 void setup() 
@@ -27,21 +27,21 @@ void setup()
         thermo1.configure_thermo();
     }
     
-    // Setup the IMU.
-    // if (imu.connect_to_imu())
-    // {
-    //     SerialUSB.println("IMU connected!!");
-    //     imu.configure_imu();
-    // }
-    // else
-    // {
-    //     SerialUSB.println("IMU not connected. Moving on without IMU :(");
-    // }
+    //Setup the IMU.
+    if (imu.connect_to_imu())
+    {
+        SerialUSB.println("IMU connected!!");
+        imu.configure_imu();
+    }
+    else
+    {
+        SerialUSB.println("IMU not connected. Moving on without IMU :(");
+    }
 }
 
 void loop() 
 {
-    //imu.imu_loop();
+    imu.imu_loop();
     thermo1.thermo_loop();
     delay(LOOP_DELAY);
 }
@@ -52,7 +52,7 @@ void loop()
 bool setup_serial() 
 {
     // Try to connect to USB Serial.
-    SerialUSB.begin(BAUD);
+    SerialUSB.begin(BAUD_RATE_RSX);
     
     // Prevent an infinate loop by setting an upper bound.
     int safetyCount = 0;
