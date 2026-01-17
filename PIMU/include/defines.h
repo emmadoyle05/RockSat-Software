@@ -13,4 +13,10 @@
 /// How long to wait in ms for each update loop.
 #define LOOP_DELAY 100
 
+/// The external sd card chip select pin.
+#define EXTERNAL_SD_CS 10
+
+/// The pin for the timed event.
+#define TE_PIN 33
+
 #endif

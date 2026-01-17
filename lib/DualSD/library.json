@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+  "name": "DualSD",
+  "version": "1.0.0",
+  "headers": ["DualSD.h"],
+  "authors": {
+    "name": "Cameron DeMartini",
+    "url": "https://github.com/CameronD35"
+  }
+}

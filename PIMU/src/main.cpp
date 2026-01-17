@@ -1,7 +1,8 @@
 #include "main.h"
 #include "defines.h"
 #include "sensors/IMU.h"
-#include "sensors/Thermocouple.h"
+#include "sensors/Pressure.h"
+#include <DualSD.h>
 
 /// If the serial did not connect.
 bool faultySerial = false;
@@ -10,10 +11,14 @@ bool faultyIMU = false;
 
 /// The IMU connection.
 IMU imu;
-Thermocouple thermo1 = Thermocouple(0x67);
+Pressure pressure = Pressure();
 
-void setup() 
+DualSD dualSd;
+
+void setup()
 {
+    pinMode(TE_PIN, INPUT);
+
     // Setup serial.
     if (setup_serial()) 
     {
@@ -21,10 +26,14 @@ void setup()
         SerialUSB.println("Connected to the serial.");
     }
     
-    if (thermo1.connect_to_thermo()) 
+    if (pressure.connect_to_sensor()) 
     {
-        SerialUSB.printf("Thermocouple with adress %d connected!\n", thermo1.address);
-        thermo1.configure_thermo();
+        SerialUSB.println("Pressure sensor connected!");
+        pressure.configure_sensor();
+    }
+    else
+    {
+        SerialUSB.println("Pressure not connected. Moving on without pressure :(");
     }
     
     //Setup the IMU.
@@ -37,12 +46,23 @@ void setup()
     {
         SerialUSB.println("IMU not connected. Moving on without IMU :(");
     }
+    
+    int connectedCount = dualSd.begin(BUILTIN_SDCARD, EXTERNAL_SD_CS);
+    if (connectedCount < 2)
+        SerialUSB.printf("ONE OR MORE SD CARDS COULD NOT CONNECT!! Number of SD cards connected: %i.\n", connectedCount);
+    dualSd.initializeFiles("seconds_after_power,pressure_Pa,accel_x_m/s/s,accel_y_m/s/s,accel_z_m/s/s,gyro_x_rad/s,gyro_y_rad/s,gyro_z_rad/s,timed_event_detected_bool");
 }
 
 void loop() 
 {
-    imu.imu_loop();
-    thermo1.thermo_loop();
+    String imuStr = imu.imu_loop();
+    String pressStr = pressure.sensor_loop();
+    
+    int te = digitalRead(TE_PIN);
+    
+    String combinedCsv = String(millis() / 1000.0).append(pressStr).append(imuStr).append(",").append(te);
+    dualSd.write(combinedCsv);
+    
     delay(LOOP_DELAY);
 }
 

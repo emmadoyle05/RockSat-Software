@@ -1,8 +1,8 @@
 #include "sensors/IMU.h"
 
-void IMU::imu_loop() 
+String IMU::imu_loop() 
 {
-    if (imuConnected) 
+    if (imuConnected)
     {        
         // == Credit: dsp-mark (https://github.com/dsp-mark) ==
         // Get the IMU data
@@ -22,6 +22,10 @@ void IMU::imu_loop()
         SerialUSB.printf("IMU Gyro = %.2f, %.2f, %.2f m/s/s\n", gyro_x, gyro_y, gyro_z);
         SerialUSB.println(seconds);
         // == End Credit. ==
+        
+        char buffer[200];
+        snprintf(buffer, 100, ",%f,%f,%f,%f,%f,%f", accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
+        return String(buffer);
     }
     else 
     {
@@ -32,6 +36,8 @@ void IMU::imu_loop()
         
         // TODO: set imuConnected to false if I2C no longer connects.
     }
+    
+    return ",,,,,,";
 }
 
 /// Try and connect to the IMU.

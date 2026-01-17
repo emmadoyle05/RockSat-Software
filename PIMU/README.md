@@ -23,3 +23,6 @@ Example header gaurd:
 Teensy image credit to pjrc.com
 
 IMU image credit to Adafruit
+
+# Teensy Thermocouple Config
+Same as above.

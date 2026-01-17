@@ -13,8 +13,13 @@ class DualSD {
         String teensySDFileName;
         String externalSDFileName;
 
+        SDClass SDEXT;
+
         int teensy_cspin;
         int external_cspin;
+
+        bool isTeensyConnected;
+        bool isExtConnected;
 
     public:
 
@@ -32,6 +37,8 @@ class DualSD {
 
         unsigned short generateNewFileID();
 
+        String displayFileTree();
+        
 
 };
 

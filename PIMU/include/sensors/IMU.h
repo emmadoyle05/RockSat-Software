@@ -35,7 +35,7 @@ public:
     void configure_imu();
     
     /// @brief The loop for the IMU to collect data.
-    void imu_loop();
+    String imu_loop();
     
 };
 
