@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+  "name": "ThreeWayLogger",
+  "version": "1.0.0",
+  "headers": ["ThreeWayLogger.h"],
+  "authors": {
+    "name": "Owen H.",
+    "url": "https://github.com/MoonstoneStudios"
+  }
+}
