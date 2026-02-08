@@ -1,6 +1,7 @@
 #include "sensors/IMU.h"
+#include "logging/ThreeWayLogger.h"
 
-String IMU::imu_loop() 
+String IMU::sensor_loop() 
 {
     if (imuConnected)
     {        
@@ -18,38 +19,41 @@ String IMU::imu_loop()
         float gyro_y = gyro.gyro.y;
         float gyro_z = gyro.gyro.z;
 
-        SerialUSB.printf("IMU Acceleration = %.2f, %.2f, %.2f m/s/s\n", accel_x, accel_y, accel_z);
-        SerialUSB.printf("IMU Gyro = %.2f, %.2f, %.2f m/s/s\n", gyro_x, gyro_y, gyro_z);
-        SerialUSB.println(seconds);
+#ifdef PRINT_TO_CONSOLE
+        LOGGER.printf("IMU Acceleration = %.2f, %.2f, %.2f m/s/s\n", accel_x, accel_y, accel_z);
+        LOGGER.printf("IMU Gyro = %.2f, %.2f, %.2f m/s/s\n", gyro_x, gyro_y, gyro_z);
+        LOGGER.println(seconds);
+#endif
         // == End Credit. ==
         
         char buffer[200];
-        snprintf(buffer, 100, ",%f,%f,%f,%f,%f,%f", accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
+        snprintf(buffer, 200, ",%f,%f,%f,%f,%f,%f", accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
         return String(buffer);
     }
     else 
     {
         // Try to connect once more while looping to try and salvage the IMU.
-        SerialUSB.print("Attempting to connect to IMU in main loop...");
+        LOGGER.print("Attempting to connect to IMU in main loop...");
         // Pass in RETRY_MAX - 1 to only try once.
-        connect_to_imu(RETRY_MAX - 1);
+        connect_to_sensor(RETRY_MAX - 1);
         
         // TODO: set imuConnected to false if I2C no longer connects.
     }
     
+    // No data
     return ",,,,,,";
 }
 
 /// Try and connect to the IMU.
 /// @param retryDefault This is the default value for the initial retry count.
 /// @return True if connected.
-bool IMU::connect_to_imu(int retryDefault) 
+bool IMU::connect_to_sensor(int retryDefault) 
 {
     // Connect to the IMU.
     int safetyCount = retryDefault;
     while (!imu.begin_I2C(0x68, &PIMU_WIRE) && safetyCount < RETRY_MAX) 
     {
-        SerialUSB.println("Cannot connect to IMU! Retrying...");
+        LOGGER.println("Cannot connect to IMU! Retrying...");
         safetyCount++;
         delay(100);
     }
@@ -60,7 +64,7 @@ bool IMU::connect_to_imu(int retryDefault)
 }
 
 /// @brief Configure the IMU settings.
-void IMU::configure_imu() 
+void IMU::configure_sensor() 
 {
     // Measure up to 30 Gs
     imu.setAccelRange(ICM20649_ACCEL_RANGE_30_G);
@@ -72,18 +76,18 @@ void IMU::configure_imu()
     uint16_t accel_divisor = imu.getAccelRateDivisor();
     float accel_rate = 1125 / (1.0 + accel_divisor);
 
-    SerialUSB.print("Accelerometer data rate divisor set to: ");
-    SerialUSB.println(accel_divisor);
-    SerialUSB.print("Accelerometer data rate (Hz) is approximately: ");
-    SerialUSB.println(accel_rate);
+    LOGGER.print("Accelerometer data rate divisor set to: ");
+    LOGGER.println(accel_divisor);
+    LOGGER.print("Accelerometer data rate (Hz) is approximately: ");
+    LOGGER.println(accel_rate);
 
     //  icm.setGyroRateDivisor(255);
     uint8_t gyro_divisor = imu.getGyroRateDivisor();
     float gyro_rate = 1100 / (1.0 + gyro_divisor);
 
-    SerialUSB.print("Gyro data rate divisor set to: ");
-    SerialUSB.println(gyro_divisor);
-    SerialUSB.print("Gyro data rate (Hz) is approximately: ");
-    SerialUSB.println(gyro_rate);
+    LOGGER.print("Gyro data rate divisor set to: ");
+    LOGGER.println(gyro_divisor);
+    LOGGER.print("Gyro data rate (Hz) is approximately: ");
+    LOGGER.println(gyro_rate);
     // == End copied from adafruit. ==
 }

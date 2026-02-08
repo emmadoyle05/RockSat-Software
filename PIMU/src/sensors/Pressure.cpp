@@ -19,7 +19,7 @@ bool Pressure::connect_to_sensor(int retryDefault)
 
 void Pressure::configure_sensor() 
 {
-    
+    // Nothing
 }
 
 Pressure::Pressure() 
@@ -33,7 +33,11 @@ String Pressure::sensor_loop()
     {        
         // in hPa
         float pressureReading = pressure.readPressure();
+        
+#ifdef PRINT_TO_CONSOLE
         SerialUSB.printf("Pressure: %f Pa\n", pressureReading);
+#endif
+
         return String(",").append(pressureReading);
     }
     else 

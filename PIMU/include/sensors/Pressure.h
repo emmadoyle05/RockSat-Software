@@ -6,7 +6,7 @@
 #include "Sensor.h"
 #include <Adafruit_BMP280.h>
 
-
+/// @brief The pressure sensor (BMP280)
 class Pressure : public Sensor
 {
   
@@ -20,8 +20,14 @@ public:
 
     Pressure();
 
-    bool connect_to_sensor(int retryDefault = 0) override;    
+    /// @brief Connect
+    bool connect_to_sensor(int retryDefault = 0) override;
+    
+    /// @brief Change the settings.
     void configure_sensor() override;
+    
+    /// @brief Called in the arduino loop.
+    /// @return A string of CSV data.
     String sensor_loop() override;
 };
 

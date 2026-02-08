@@ -9,9 +9,11 @@ class DualSD {
 
         File teensySDFile;
         File externalSDFile;
+        File logFile;
 
         String teensySDFileName;
         String externalSDFileName;
+        String logFileName;
 
         SDClass SDEXT;
 
@@ -25,19 +27,23 @@ class DualSD {
 
         DualSD();
 
-        int begin(int teensy_cspin, int external_cspin);
+        int begin();
 
         int exists(char* filename);
 
         int initializeFiles(const char* dataHeaders);
 
-        int write(String data);
+        int writeln(String data, bool debug = false);
+        int write(String data, bool debug = false);
+        
+        int writeDebug(String data);
+        int writeDebugln(String data);
 
         int read(char* teensyOutput, char* extOutput);
 
         unsigned short generateNewFileID();
-
-        String displayFileTree();
+        
+        void writeLnToDebug(String str);
         
 
 };

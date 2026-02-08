@@ -3,6 +3,7 @@
 #include "sensors/IMU.h"
 #include "sensors/Pressure.h"
 #include <DualSD.h>
+#include "logging/ThreeWayLogger.h"
 
 /// If the serial did not connect.
 bool faultySerial = false;
@@ -11,77 +12,69 @@ bool faultyIMU = false;
 
 /// The IMU connection.
 IMU imu;
+/// The pressure sensor
 Pressure pressure = Pressure();
-
+/// The SD manager
 DualSD dualSd;
+
+void createCSVHeader();
 
 void setup()
 {
     pinMode(TE_PIN, INPUT);
 
-    // Setup serial.
-    if (setup_serial()) 
-    {
-        // Should be connected.
-        SerialUSB.println("Connected to the serial.");
-    }
+    LOGGER.begin(&dualSd);
     
+    // Check SD card
+    int connectedCount = dualSd.begin();
+    if (connectedCount < 2)
+        LOGGER.printf("ONE OR MORE SD CARDS COULD NOT CONNECT!! Number of SD cards connected: %i.\n", connectedCount);
+
+    // This will save the first line as a CSV header.
+    createCSVHeader();
+
+    // Setup pressure
     if (pressure.connect_to_sensor()) 
     {
-        SerialUSB.println("Pressure sensor connected!");
+        LOGGER.println("Pressure sensor connected!");
         pressure.configure_sensor();
     }
     else
     {
-        SerialUSB.println("Pressure not connected. Moving on without pressure :(");
+        LOGGER.println("Pressure not connected. Moving on without pressure :(");
     }
     
     //Setup the IMU.
-    if (imu.connect_to_imu())
+    if (imu.connect_to_sensor())
     {
-        SerialUSB.println("IMU connected!!");
-        imu.configure_imu();
+        LOGGER.println("IMU connected!!");
+        imu.configure_sensor();
     }
     else
     {
-        SerialUSB.println("IMU not connected. Moving on without IMU :(");
+        LOGGER.println("IMU not connected. Moving on without IMU :(");
     }
-    
-    int connectedCount = dualSd.begin(BUILTIN_SDCARD, EXTERNAL_SD_CS);
-    if (connectedCount < 2)
-        SerialUSB.printf("ONE OR MORE SD CARDS COULD NOT CONNECT!! Number of SD cards connected: %i.\n", connectedCount);
-    dualSd.initializeFiles("seconds_after_power,pressure_Pa,accel_x_m/s/s,accel_y_m/s/s,accel_z_m/s/s,gyro_x_rad/s,gyro_y_rad/s,gyro_z_rad/s,timed_event_detected_bool");
 }
 
 void loop() 
 {
-    String imuStr = imu.imu_loop();
+    // Get the data as CSV strings
+    String imuStr = imu.sensor_loop();
     String pressStr = pressure.sensor_loop();
     
+    // Check for TE
     int te = digitalRead(TE_PIN);
     
-    String combinedCsv = String(millis() / 1000.0).append(pressStr).append(imuStr).append(",").append(te);
-    dualSd.write(combinedCsv);
+    // Save the data inta a line of CSV
+    double timeInSeconds = millis() / 1000.0;
+    String combinedCsv = String(timeInSeconds).append(pressStr).append(imuStr).append(",").append(te);
+    dualSd.writeln(combinedCsv);
     
     delay(LOOP_DELAY);
 }
 
-
-/// Start the serial connection.
-/// @return True if connected.
-bool setup_serial() 
+/// @brief The CSV header string
+void createCSVHeader() 
 {
-    // Try to connect to USB Serial.
-    SerialUSB.begin(BAUD_RATE_RSX);
-    
-    // Prevent an infinate loop by setting an upper bound.
-    int safetyCount = 0;
-    while (!SerialUSB && safetyCount < RETRY_MAX) 
-    {
-        delay(10);
-        safetyCount++;
-    }
-    
-    faultySerial = safetyCount >= RETRY_MAX;
-    return !faultySerial;
+    dualSd.initializeFiles("seconds_after_power,pressure_Pa,accel_x_m/s/s,accel_y_m/s/s,accel_z_m/s/s,gyro_x_rad/s,gyro_y_rad/s,gyro_z_rad/s,timed_event_detected_bool");
 }

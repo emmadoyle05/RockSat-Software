@@ -7,9 +7,10 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 #include "defines.h"
+#include "sensors/Sensor.h"
 
 /// @brief The IMU handler.
-class IMU 
+class IMU : public Sensor
 {
 
 public:
@@ -29,13 +30,14 @@ public:
     /// Try to connect to the IMU
     /// @param retryDefault The starting value for how many attempts to try to connect.
     /// @return True if connected.
-    bool connect_to_imu(int retryDefault = 0);
+    bool connect_to_sensor(int retryDefault = 0) override;
     
     /// @brief Configure the settings for the IMU.
-    void configure_imu();
+    void configure_sensor() override;
     
     /// @brief The loop for the IMU to collect data.
-    String imu_loop();
+    /// @returns The CSV string.
+    String sensor_loop() override;
     
 };
 
