@@ -3,7 +3,7 @@
 #include "sensors/IMU.h"
 #include "sensors/Pressure.h"
 #include <DualSD.h>
-#include "logging/ThreeWayLogger.h"
+#include <ThreeWayLogger.h>
 
 /// If the serial did not connect.
 bool faultySerial = false;

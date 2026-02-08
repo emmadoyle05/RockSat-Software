@@ -1,5 +1,5 @@
 #include "sensors/Pressure.h"
-
+#include <ThreeWayLogger.h>
 
 bool Pressure::connect_to_sensor(int retryDefault)
 {
@@ -7,7 +7,7 @@ bool Pressure::connect_to_sensor(int retryDefault)
     int safetyCount = retryDefault;
     while (!pressure.begin(119U) && safetyCount < RETRY_MAX) 
     {
-        SerialUSB.println("Cannot connect to Pressure! Retrying...");
+        LOGGER.println("Cannot connect to Pressure! Retrying...");
         safetyCount++;
         delay(100);
     }
@@ -35,7 +35,7 @@ String Pressure::sensor_loop()
         float pressureReading = pressure.readPressure();
         
 #ifdef PRINT_TO_CONSOLE
-        SerialUSB.printf("Pressure: %f Pa\n", pressureReading);
+        LOGGER.printf("Pressure: %f Pa\n", pressureReading);
 #endif
 
         return String(",").append(pressureReading);
@@ -43,7 +43,7 @@ String Pressure::sensor_loop()
     else 
     {
         // Try to connect once more while looping to try and salvage the IMU.
-        SerialUSB.print("Attempting to connect to pressure in main loop...");
+        LOGGER.print("Attempting to connect to pressure in main loop...");
         // Pass in RETRY_MAX - 1 to only try once.
         connect_to_sensor(RETRY_MAX - 1);
     }
