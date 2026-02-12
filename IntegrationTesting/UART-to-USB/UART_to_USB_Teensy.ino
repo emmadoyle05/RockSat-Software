@@ -4,11 +4,11 @@ void setup() {
     while (!Serial);
 
     // Set up UART output (the one we're doing the data cable with)
-    Serial1.begin(115200);
+    Serial2.begin(115200);
     delay(1000);
 
     Serial.println("Serial Monitor ready!");
-    Serial1.println("Data cable ready!");
+    Serial2.println("Data cable ready!");
 
     // Heartbeat to make sure Teensy is even on
     // This isn't actually needed for the code; I just wanted to make sure
@@ -20,7 +20,7 @@ void loop() {
     // Sending to the serial monitor
     Serial.println("Hello, serial monitor! I'm Teensy! :-D");
     // Sending to the data cable
-    Serial1.println("Hello, data cable! I'm Teensy! :-D");
+    Serial2.println("Hello, data cable! I'm Teensy! :-D");
 
     // Blinking LED so I know Teensy is still connected
     // Once again, this part isn't needed.
