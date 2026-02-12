@@ -4,6 +4,7 @@ void setup() {
     while (!Serial);
 
     // Set up UART output (the one we're doing the data cable with)
+    // REMEMBER WE ARE USING PINS 7 AND 8 (SERIAL 2)
     Serial2.begin(115200);
     delay(1000);
 
