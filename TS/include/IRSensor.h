@@ -1,3 +1,5 @@
+// ==== Modified for COC RSX ====
+// ==== Original Code Author Credit ====
 // MLX90641_processing.ino file for the MLX90641.h library, version 1.0.4
 // Description: Outputs the ambient temperature + pixels all in one line
 // to the Serial Monitor. Works in conjunction with the following sketch:

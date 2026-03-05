@@ -1,6 +1,7 @@
 #include "IRSensor.h"
 #include <ThreeWayLogger.h>
 
+// ==== Modified for COC RSX ====
 // ====== Original author credit ======
 // Author: D. Dubins
 // Lots of help from: ChatGPT 3.0, Perplexity.AI
