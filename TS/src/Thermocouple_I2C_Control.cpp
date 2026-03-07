@@ -1,51 +1,26 @@
-#include <Arduino.h>
-#include <Wire.h>
-#include <Adafruit_I2CDevice.h>
-#include <Adafruit_I2CRegister.h>
-#include <Adafruit_MCP9600.h>
-#include <ThreeWayLogger.h>
-#include <DualSD.h>
+#include "Thermocouple_I2C_Control.h"
 
-//Amplifiers on I2C Bus 1:
-Adafruit_MCP9600 Amp1;
-Adafruit_MCP9600 Amp2;
-Adafruit_MCP9600 Amp3;
+#define RETRY_MAX 256
+// In ms
+#define RETRY_DELAY 100 
 
-const uint8_t Address1 = 0x66; //J1
-const uint8_t Address2 = 0x65; //J2
-const uint8_t Address3 = 0x65; //No Jump
+void ThermocoupleControl::initializeI2C1(){
 
-//Amplifiers on I2C Bus 2:
-Adafruit_MCP9600 Amp4;
-Adafruit_MCP9600 Amp5;
-
-const uint8_t Address4 = 0x67; //No jump
-const uint8_t Address5 = 0x65; //J2
-
-bool ADDR_ONE_CHECK = false;
-bool ADDR_TWO_CHECK = false;
-bool ADDR_THREE_CHECK = false;
-bool ADDR_FOUR_CHECK = false;
-bool ADDR_FIVE_CHECK = false;
-
-
-void initializeI2C1(){
-
-  Serial.println("Initializing I2C_1");
+  //Serial.println("Initializing I2C_1");
   LOGGER.println("Initializing I2C_1");
 
   Wire1.begin();
 
   int debounce = 0;
 
-  while (!Amp1.begin(Address1, &Wire1) && debounce < 5){
+  while (!Amp1.begin(Address1, &Wire1) && debounce < RETRY_MAX){
     debounce++;
-    Serial.println("Amplifier 1 not found!");
+    //Serial.println("Amplifier 1 not found!");
     LOGGER.println("Amplifier 1 not found!");
-    delay(500);
+    delay(RETRY_DELAY);
   }
 
-    debounce = 0;
+  debounce = 0;
 
   if (Amp1.begin(Address1, &Wire1)){
     ADDR_ONE_CHECK = true;
@@ -53,10 +28,10 @@ void initializeI2C1(){
     Amp1.setThermocoupleType(MCP9600_TYPE_N);
   }
 
-  while (!Amp2.begin(Address2, &Wire1) && debounce < 5){
+  while (!Amp2.begin(Address2, &Wire1) && debounce < RETRY_MAX){
     debounce++;
-    Serial.println("Amplifier 2 not found!");
-    delay(500);
+    LOGGER.println("Amplifier 2 not found!");
+    delay(RETRY_DELAY);
   }
 
   debounce = 0;
@@ -67,10 +42,10 @@ void initializeI2C1(){
     Amp2.setThermocoupleType(MCP9600_TYPE_N);
   }
 
-  while (!Amp3.begin(Address3, &Wire1) && debounce < 5){
+  while (!Amp3.begin(Address3, &Wire1) && debounce < RETRY_MAX){
     debounce++;
-    Serial.println("Amplifier 3 not found!");
-    delay(500);
+    LOGGER.println("Amplifier 3 not found!");
+    delay(RETRY_DELAY);
   }
 
   debounce = 0;
@@ -81,22 +56,22 @@ void initializeI2C1(){
     Amp3.setThermocoupleType(MCP9600_TYPE_N);
   }
 
-  Serial.println("All amplifiers found!");
-  Serial.println("I2C_1 Established");
-  LOGGER.printf("%0f : I2C_1 Initialized", millis() / 1000);
+  LOGGER.println("All amplifiers found!");
+  LOGGER.println("I2C_1 Established");
+  LOGGER.printf("%0f : I2C_1 Initialized", millis() / 1000.0);
 }
 
-void initializeI2C2(){
+void ThermocoupleControl::initializeI2C2(){
 
   int debounce = 0;
 
-  Serial.println("Initializing I2C_2");
+  LOGGER.println("Initializing I2C_2");
   
   Wire2.begin();
 
-  while (!Amp4.begin(Address4, &Wire2) && debounce < 5){
-    Serial.println("Amplifier 4 not found");
-    delay(500);
+  while (!Amp4.begin(Address4, &Wire2) && debounce < RETRY_MAX){
+    LOGGER.println("Amplifier 4 not found");
+    delay(RETRY_MAX);
   }
 
   if (Amp4.begin(Address4, &Wire2)){
@@ -105,9 +80,9 @@ void initializeI2C2(){
     Amp4.setThermocoupleType(MCP9600_TYPE_N);
   }
 
-  while (!Amp5.begin(Address5, &Wire2) && debounce < 5){
-    Serial.println("Amplifier 5 not found!");
-    delay(500);  
+  while (!Amp5.begin(Address5, &Wire2) && debounce < RETRY_MAX){
+    LOGGER.println("Amplifier 5 not found!");
+    delay(RETRY_DELAY);  
   }
 
   if (Amp5.begin(Address5, &Wire2)){
@@ -116,12 +91,12 @@ void initializeI2C2(){
     Amp5.setThermocoupleType(MCP9600_TYPE_N);
   }
 
-  Serial.println("All amplifiers found!");
-  Serial.println("I2C_2 Established");
-  LOGGER.printf("%0f : I2C_2 Initialized", millis() / 1000);
+  LOGGER.println("All amplifiers found!");
+  LOGGER.println("I2C_2 Established");
+  LOGGER.printf("%0f : I2C_2 Initialized", millis() / 1000.0);
 }
 
-String getHotJunctionString(){
+String ThermocoupleControl::getHotJunctionString(){
   String hotJunctionString;
 
   hotJunctionString.append(Amp1.readThermocouple());
@@ -138,19 +113,19 @@ String getHotJunctionString(){
   return hotJunctionString;
 }
 
-void printHotJunctions(){
-  Serial.println("Hot Junctions:");
+void ThermocoupleControl::printHotJunctions(){
+  LOGGER.println("Hot Junctions:");
 
   //I2C Bus 1:
-  Serial.printf("One: %0.2f\n", Amp1.readThermocouple());
-  Serial.printf("Two: %0.2f\n", Amp2.readThermocouple());
-  Serial.printf("Three: %0.2f\n", Amp3.readThermocouple());
+  LOGGER.printf("One: %0.2f\n", Amp1.readThermocouple());
+  LOGGER.printf("Two: %0.2f\n", Amp2.readThermocouple());
+  LOGGER.printf("Three: %0.2f\n", Amp3.readThermocouple());
   //I2C Bus 2:
-  Serial.printf("Four: %0.2f\n", Amp4.readThermocouple());
-  Serial.printf("Five: %0.2f\n", Amp5.readThermocouple());
+  LOGGER.printf("Four: %0.2f\n", Amp4.readThermocouple());
+  LOGGER.printf("Five: %0.2f\n", Amp5.readThermocouple());
 }
 
-String getColdJunctionString(){
+String ThermocoupleControl::getColdJunctionString(){
   String coldJunctionString;
 
   coldJunctionString.append(Amp1.readAmbient());
@@ -167,19 +142,19 @@ String getColdJunctionString(){
   return coldJunctionString;
 }
 
-void printColdJunctions(){
-  Serial.println("Cold Junctions:");
+void ThermocoupleControl::printColdJunctions(){
+  LOGGER.println("Cold Junctions:");
 
   //I2C Bus 1:
-  Serial.printf("One: %0.2f\n", Amp1.readAmbient());
-  Serial.printf("Two: %0.2f\n", Amp2.readAmbient());
-  Serial.printf("Three: %0.2f\n", Amp3.readAmbient());
+  LOGGER.printf("One: %0.2f\n", Amp1.readAmbient());
+  LOGGER.printf("Two: %0.2f\n", Amp2.readAmbient());
+  LOGGER.printf("Three: %0.2f\n", Amp3.readAmbient());
   //I2C Bus 2:
-  Serial.printf("Four: %0.2f\n", Amp4.readAmbient());
-  Serial.printf("Five: %0.2f\n", Amp5.readAmbient());
+  LOGGER.printf("Four: %0.2f\n", Amp4.readAmbient());
+  LOGGER.printf("Five: %0.2f\n", Amp5.readAmbient());
 }
 
-String getADC(){
+String ThermocoupleControl::getADC(){
   String ADC;
 
   ADC.append(Amp1.readADC());
@@ -196,54 +171,54 @@ String getADC(){
   return ADC;
 }
 
-void printADCs(){
-  Serial.println("ADCs:");
+void ThermocoupleControl::printADCs(){
+  LOGGER.println("ADCs:");
 
   //I2C Bus 1:
-  Serial.printf("One: %0.2f\n", Amp1.readADC());
-  Serial.printf("Two: %0.2f\n", Amp2.readADC());
-  Serial.printf("Three: %0.2f\n", Amp3.readADC());
+  LOGGER.printf("One: %0.2f\n", Amp1.readADC());
+  LOGGER.printf("Two: %0.2f\n", Amp2.readADC());
+  LOGGER.printf("Three: %0.2f\n", Amp3.readADC());
   
   //I2C Bus 2:
-  Serial.printf("Four: %0.2f\n", Amp4.readADC());
-  Serial.printf("Five: %0.2f\n", Amp5.readADC());
+  LOGGER.printf("Four: %0.2f\n", Amp4.readADC());
+  LOGGER.printf("Five: %0.2f\n", Amp5.readADC());
 }
 
-void printAMPnum(int num){
+void ThermocoupleControl::printAMPnum(int num){
   switch (num)
   {
   case 1:
-    Serial.printf("Hot Junction One: %0.2f\n", Amp1.readThermocouple());
-    Serial.printf("Cold Junction One: %0.2f\n", Amp1.readAmbient());
-    Serial.printf("ADC One: %0.2f\n", Amp1.readADC());
+    LOGGER.printf("Hot Junction One: %0.2f\n", Amp1.readThermocouple());
+    LOGGER.printf("Cold Junction One: %0.2f\n", Amp1.readAmbient());
+    LOGGER.printf("ADC One: %0.2f\n", Amp1.readADC());
     break;
   case 2:
-    Serial.printf("Hot Junction One: %0.2f\n", Amp2.readThermocouple());
-    Serial.printf("Cold Junction Two: %0.2f\n", Amp2.readAmbient());
-    Serial.printf("ADC Two: %0.2f\n", Amp2.readADC());
+    LOGGER.printf("Hot Junction Two: %0.2f\n", Amp2.readThermocouple());
+    LOGGER.printf("Cold Junction Two: %0.2f\n", Amp2.readAmbient());
+    LOGGER.printf("ADC Two: %0.2f\n", Amp2.readADC());
     break;
   case 3:
-    Serial.printf("Hot Junction Three: %0.2f\n", Amp3.readThermocouple());
-    Serial.printf("Cold Junction Three: %0.2f\n", Amp3.readAmbient());
-    Serial.printf("ADC Three: %0.2f\n", Amp3.readADC());
+    LOGGER.printf("Hot Junction Three: %0.2f\n", Amp3.readThermocouple());
+    LOGGER.printf("Cold Junction Three: %0.2f\n", Amp3.readAmbient());
+    LOGGER.printf("ADC Three: %0.2f\n", Amp3.readADC());
     break;
   case 4:
-    Serial.printf("Hot Junction Four: %0.2f\n", Amp4.readThermocouple());
-    Serial.printf("Cold Junction Four: %0.2f\n", Amp4.readAmbient());
-    Serial.printf("ADC Four: %0.2f\n", Amp4.readADC());
+    LOGGER.printf("Hot Junction Four: %0.2f\n", Amp4.readThermocouple());
+    LOGGER.printf("Cold Junction Four: %0.2f\n", Amp4.readAmbient());
+    LOGGER.printf("ADC Four: %0.2f\n", Amp4.readADC());
     break;
   case 5:
-    Serial.printf("Hot Junction Five: %0.2f\n", Amp5.readThermocouple());
-    Serial.printf("Cold Junction Five: %0.2f\n", Amp5.readAmbient());
-    Serial.printf("ADC Five: %0.2f\n", Amp5.readADC());
+    LOGGER.printf("Hot Junction Five: %0.2f\n", Amp5.readThermocouple());
+    LOGGER.printf("Cold Junction Five: %0.2f\n", Amp5.readAmbient());
+    LOGGER.printf("ADC Five: %0.2f\n", Amp5.readADC());
     break;
   default:
-    Serial.println("Invalid thermocouple selected");
+    LOGGER.println("Invalid thermocouple selected");
     break;
   }
 }
 
-String getThermocoupleData(){
+String ThermocoupleControl::getThermocoupleData(){
   return getHotJunctionString().append(getColdJunctionString()).append(getADC());
 }
 
