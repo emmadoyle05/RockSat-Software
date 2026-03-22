@@ -1,0 +1,17 @@
+[Unit]
+Description=RSX LiDAR
+DefaultDependencies=false
+
+[Service]
+WorkingDirectory=/home/rsx/RockSat-Software/ML/steppers
+Restart=always
+ExecStart=/home/rsx/RockSat-Software/ML/steppers/raster_scan
+
+User=rsx
+Group=rsx
+
+[Install]
+WantedBy=local-fs.target
+
+
+# sudo nano /etc/systemd/system/rsx_lidar.service

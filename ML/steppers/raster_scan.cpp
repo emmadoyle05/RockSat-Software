@@ -1,4 +1,5 @@
-#include <pigpio.h>
+//#include <pigpio.h>
+#include <wiringPi.h>
 #include <termios.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -12,6 +13,7 @@
 #include <chrono>
 
 // g++ -o raster_scan raster_scan.cpp -lpigpio -lrt -std=c++17
+// g++ -o raster_scan raster_scan.cpp -lwiringPi -lrt -std=c++17
 
 // TMC2209 Stepper Driver communication class
 // Used since the driver allows for up to 4 stepper drivers to communicate
@@ -45,7 +47,7 @@ private:
 	}
 
 public:
-	static bool init_shared_UART(const char* device = "/dev/ttyS0") {
+	static bool init_shared_UART(const char* device = "/dev/ttyAMA0") {
 		uart_fd = open(device, O_RDWR | O_NOCTTY | O_SYNC);
 		if (uart_fd < 0) {
 			std::cerr << "Failed to open UART device " << device << "\n";
@@ -129,9 +131,9 @@ public:
 	TMC2209 tmc;
 	
 	Stepper(int step, int dir, uint8_t tmc_addr) : step_pin(step), dir_pin(dir), tmc(tmc_addr) {
-		gpioSetMode(step_pin, PI_OUTPUT);
-		gpioSetMode(dir_pin, PI_OUTPUT);
-		gpioWrite(step_pin, 0);
+		pinMode(step_pin, OUTPUT);
+		pinMode(dir_pin, OUTPUT);
+		digitalWrite(step_pin, 0);
 	}
 	
 	void configure() {
@@ -141,10 +143,10 @@ public:
 	
 	// Move a single step in a given direction
 	void move(int dir, int pulse_us = 1000) {
-		gpioWrite(dir_pin, dir > 0 ? 1 : 0);
-		gpioWrite(step_pin, 1);
+		digitalWrite(dir_pin, dir > 0 ? 1 : 0);
+		digitalWrite(step_pin, 1);
 		usleep(pulse_us);
-		gpioWrite(step_pin, 0);
+		digitalWrite(step_pin, 0);
 		usleep(pulse_us);
 	}
 
@@ -228,7 +230,7 @@ public:
 		
 		std::ostringstream filename;
 		
-		filename << "stepper_test_history__" << std::put_time(&tm, "%Y-%m-%d__%H-%M") << ".csv";
+		filename << "stepper_test_history__" << std::put_time(&tm, "%Y-%m-%d__%H-%M") << "NEW.csv";
 		
 		csv_file.open(filename.str());
 		csv_file << "scan_id,timestamp_ms,duration_s\n";
@@ -314,10 +316,11 @@ int main() {
 	
 	// So until we make the daemon: We kill the pigpiod daemon in cold blood
 	// DAEMON slayers.
-	system("sudo killall pigpiod");
-	usleep(100000);
+	//system("sudo killall pigpiod");
+	//sleep(16);
 
-	if (gpioInitialise() < 0 || !TMC2209::init_shared_UART("/dev/ttyS0")) {
+	wiringPiSetupGpio();
+	if (!TMC2209::init_shared_UART("/dev/ttyAMA0")) {
 		std::cerr << "Pigpio or UART failed; shutting down." << std::endl;
 		return 1;
 	}
@@ -359,6 +362,6 @@ int main() {
 	
 	logger.print_summary();
 	
-	gpioTerminate();
+	//gpioTerminate();
 	return 0;
 }
