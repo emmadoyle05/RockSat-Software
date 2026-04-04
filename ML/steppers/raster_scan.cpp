@@ -1,3 +1,4 @@
+
 //#include <pigpio.h>
 #include <wiringPi.h>
 #include <termios.h>
@@ -11,6 +12,8 @@
 #include <iomanip>
 #include <csignal>
 #include <chrono>
+
+#include <sys/ioctl.h>
 
 // g++ -o raster_scan raster_scan.cpp -lpigpio -lrt -std=c++17
 // g++ -o raster_scan raster_scan.cpp -lwiringPi -lrt -std=c++17
@@ -47,6 +50,28 @@ private:
 	}
 
 public:
+
+// https://stackoverflow.com/questions/25481291/printing-out-bytes-of-a-byte-buffer-to-console-output-stream-in-hexadecimal-nota
+void PrintBytes(
+    const char* pBytes,
+    const uint32_t nBytes) // should more properly be std::size_t
+{
+    for (uint32_t i = 0; i != nBytes; i++)
+    {
+
+	//std::byte b {pBytes[i]};
+	//std::cout << b << "   ";
+        std::cout << 
+            std::hex <<           // output in hex
+            std::setw(2) <<       // each byte prints as two characters
+            std::setfill('0') <<  // fill with 0 if not enough characters
+            static_cast<unsigned int>(pBytes[i]) << " ";
+    }
+   std::cout << std::endl;
+}
+
+
+
 	static bool init_shared_UART(const char* device = "/dev/ttyAMA0") {
 		uart_fd = open(device, O_RDWR | O_NOCTTY | O_SYNC);
 		if (uart_fd < 0) {
@@ -61,6 +86,16 @@ public:
 		cfsetospeed(&options, B115200);
 		options.c_cflag |= (CLOCAL | CREAD | CS8);
 		options.c_lflag &= ~(ICANON | ECHO | ISIG);
+
+		// testing
+		options.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
+		options.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
+		options.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
+		options.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
+
+		options.c_cc[VTIME] = 1;    // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
+		options.c_cc[VMIN] = 0;
+
 		tcsetattr(uart_fd, TCSANOW, &options);
 		return true;
 	}
@@ -86,6 +121,33 @@ public:
 		write(uart_fd, frame, 8);
 		usleep(5000);
 	}
+
+
+	void read_register(uint8_t reg) {
+		uint8_t frame[4] = {0};
+		frame[0] = 0x05;
+		frame[1] = slave_addr;
+		frame[2] = reg;
+		std::cout << "crc now" << std::endl;
+		frame[3] = calculate_CRC(frame, 3);
+
+		std::cout << "lets write!" << std::endl;
+		write(uart_fd, frame, 4);
+		usleep(5000);
+		std::cout << "lol1" << std::endl;
+		// get avaliable
+		//int avaliable = 0;
+		// https://stackoverflow.com/questions/5900216/get-the-count-of-bytes-waiting-on-a-serial-port-before-reading-linux
+		//ioctl(uart_fd, FIONREAD, avaliable);
+		std::cout << "iotcl" << std::endl;
+		// read https://linux.die.net/man/3/read
+		usleep(5000);
+		char receivedData[8];
+		read(uart_fd, receivedData, sizeof(receivedData));
+		std::cout << "read data" << std::endl;
+		PrintBytes(receivedData, 8);
+		std::cout << "printed" << std::endl;
+	}
 	
 	void configure_stepper (int mA_rms = 600, int microsteps = 16) {
 		// GCCONF: UART mode, internal Rsense
@@ -104,6 +166,12 @@ public:
 		
 		// PWMCONF: StealthChop enabled (silent)
 		write_register(0x70, 0x000114D4);  
+
+		// Testing stall gaurd
+		uint32_t threshold = 250;
+		write_register(0x40, threshold);
+		write_register(0x14, 1048576 - 1);
+
 	}
 }; // End TMC2209 class
 
@@ -301,6 +369,12 @@ public:
 // Needs to be here since signalHandler needs to hook on to it.
 ScanLogger logger;
 
+
+void interruptCB(void) {
+	std::cout << "Stall gaurd!" << std::endl;
+}
+
+
 // NOTE: If the gimbal only moves 1 step per 15 ms then it'd take 5 hours to do a full raster scan
 // Because the VL53L8CX have a 45 by 45 field of view it's better to (1) move in 45 deg chunks (400 steps); (2) 4-5 movements instead 
 int main() {
@@ -319,11 +393,20 @@ int main() {
 	//system("sudo killall pigpiod");
 	//sleep(16);
 
+	int interruptPin = 17;
+
+
 	wiringPiSetupGpio();
 	if (!TMC2209::init_shared_UART("/dev/ttyAMA0")) {
 		std::cerr << "Pigpio or UART failed; shutting down." << std::endl;
 		return 1;
 	}
+
+
+	pinMode(interruptPin, INPUT);
+	// The interrupt setup for stall gaurd. We want rising edge so we can respond ASAP.
+	wiringPiISR(interruptPin, INT_EDGE_RISING, &interruptCB);
+
 	
 	// Set Azimuth Stepper to 0 (STEP = 16; DIR = 20, ID=0 (LOW, LOW))
 	Azimuth azimuth(16, 20, 0);
@@ -346,9 +429,10 @@ int main() {
 
 		for (int chunk = 0; chunk < 3; ++chunk) {
 			altitude.full_raster_sweep(STEP_US);
-
+			altitude.tmc.read_register(0x41);
 			if (chunk < 2) {
 				azimuth.next_chunk(STEP_US);
+				azimuth.tmc.read_register(0x41);
 			}
 		}
 
