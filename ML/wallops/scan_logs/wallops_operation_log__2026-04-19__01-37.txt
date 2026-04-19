@@ -1,0 +1,8 @@
+[GOOD MORNING, WALLOPS!!!] 2026-04-19__01-37
+[0.002248s] Wide Angle LiDAR Laser Operating In Space beginning scan!
+[0.002270s] Azimuth set to +/-45.000000 deg
+[0.002275s] Altitude set to +/-25.000000 deg
+[11.05110s] Scan #1complete
+[22.20184s] Scan #2complete
+[33.25506s] Scan #3complete
+[44.30185s] Scan #4complete
