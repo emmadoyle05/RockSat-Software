@@ -260,6 +260,7 @@ public:
 class Altitude : public Stepper {
 private:
 	static const int STEPS_90 = 800;
+	static const int STEPS_45 = 400;
 public:
 	using Stepper::Stepper;
 
@@ -273,11 +274,11 @@ public:
 
 	void full_raster_sweep(int pulse_us = 1000) {
 		std::cout << " ALT: 0 to 90 sweep";
-		step_up(STEPS_90, pulse_us);
-		capture_lidar_data(0, STEPS_90);
+		step_up(STEPS_45, pulse_us);
+		capture_lidar_data(0, STEPS_45);
 
 		std::cout << " ALT: 90 to 0 sweep";
-		step_down(STEPS_90, pulse_us);
+		step_down(STEPS_45, pulse_us);
 		capture_lidar_data(0, 0);
 	}
 }; // End Altitude class
